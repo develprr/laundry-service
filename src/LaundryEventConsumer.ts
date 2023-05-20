@@ -1,42 +1,52 @@
-import { Kafka } from 'kafkajs';
+import { Consumer, Kafka } from 'kafkajs'
 
 export namespace LaundryEventConsumer {
 
-    const kafka = new Kafka({
-        clientId: 'laundry-app',
-        brokers: ['localhost:9092']
-    });   
+  // Define Kafka client:
+  const kafka: Kafka = new Kafka({
+    clientId: 'laundry-app',
+    brokers: ['localhost:9092'],
+  })
 
-    type EventCallback =  (event: any) => void;
+  // Structure of event call back functions:
+  type EventCallback = (event: any) => void
 
-    const consumer = kafka.consumer({ groupId: 'laundry-group' });
+  // Kafka consumer to listen for Kafka events:
+  const consumer: Consumer = kafka.consumer({ groupId: 'laundry-group' })
 
-    const eventCallbacks: EventCallback[] = [];
+  // Array of callbacks to be called upon a Kafka event:
+  const eventCallbacks: EventCallback[] = []
 
-    export const addEventCallback = (callback: EventCallback) => {
-      eventCallbacks.push(callback);
-    }
+  // Providing a way to add a new call back to the consumer:
+  export const addEventCallback = (callback: EventCallback) => {
+    eventCallbacks.push(callback)
+  }
 
-    export const run = async () => {
-       
-        // Consuming
-        console.log("consuming");
-        await consumer.connect()
-        await consumer.subscribe({ topic: 'laundry-machine-logs', fromBeginning: true })
-        console.log("subscripbed");
-        await consumer.run({
-          eachMessage: async ({ topic, partition, message }) => {
-          const event = {
-            partition,
-            offset: message.offset,
-            value: message.value.toString(),
-          };
-          console.log(event);
-            eventCallbacks.forEach((callback: EventCallback) => {   
-                callback(event);
-            });
-          },
+  // Invoke this to connect to Kafka and start listening:
+  export const run = async () => {
+
+    // Connect Kafka consumer to Kafka
+    await consumer.connect();
+
+    // Subscribe to laundry machine log topic:
+    await consumer.subscribe({
+      topic: 'laundry-machine-logs',
+      fromBeginning: true,
+    })
+
+    // Finally, start the consumer:
+    await consumer.run({
+      eachMessage: async ({ topic, partition, message }) => {
+        const event = {
+          partition,
+          offset: message.offset,
+          value: message.value.toString(),
+        }
+        // Broadcast the received Kafka event to all listeners:
+        eventCallbacks.forEach((callback: EventCallback) => {
+          callback(event)
         })
-      }
-
+      },
+    })
+  }
 }

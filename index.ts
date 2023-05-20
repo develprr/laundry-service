@@ -1,9 +1,9 @@
-import express, { Express } from 'express';
-import * as http from 'http';
-import * as WebSocket from 'ws';
+import express, { Express } from "express";
+import * as http from "http";
+import * as WebSocket from "ws";
 import dotenv from "dotenv";
-import { LaundryEventConsumer } from './src/LaundryEventConsumer';
-import { LaundryEventProducer } from './src/LaundryEventProducer';
+import { LaundryEventConsumer } from "./src/LaundryEventConsumer";
+import { LaundryEventProducer } from "./src/LaundryEventProducer";
 
 dotenv.config();
 
@@ -13,7 +13,7 @@ const port = process.env.PORT;
 const socketServer = http.createServer(app);
 const wss = new WebSocket.Server({ server: socketServer });
 
-wss.on('connection', (ws: WebSocket) => {
+wss.on("connection", (ws: WebSocket) => {
   LaundryEventConsumer.addEventCallback((data) => {
     ws.send(data.value);
   });
